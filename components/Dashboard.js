@@ -1,31 +1,40 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import AddTransaction from './AddTransaction'; // Import the new component
+import AddTransaction from './AddTransaction';
+import AddTask from './AddTask'; // Import the new task component
 
 export default function Dashboard({ user, onSignOut }) {
   const [transactions, setTransactions] = useState([]);
+  const [tasks, setTasks] = useState([]); // State for tasks
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch transactions from Supabase
-  const fetchTransactions = async () => {
+  // Function to fetch all data
+  const fetchData = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    // Fetch transactions
+    const { data: transactionsData, error: transactionsError } = await supabase
       .from('transactions')
       .select('*')
-      .order('transaction_date', { ascending: false })
+      .order('created_at', { ascending: false });
+    
+    // Fetch tasks
+    const { data: tasksData, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching transactions:', error);
-    } else {
-      setTransactions(data);
-    }
+    if (transactionsError) console.error('Error fetching transactions:', transactionsError);
+    else setTransactions(transactionsData);
+
+    if (tasksError) console.error('Error fetching tasks:', tasksError);
+    else setTasks(tasksData);
+    
     setLoading(false);
   };
 
-  // Fetch transactions when the component loads
+  // Fetch all data when the component loads
   useEffect(() => {
-    fetchTransactions();
+    fetchData();
   }, []);
 
   return (
@@ -36,12 +45,7 @@ export default function Dashboard({ user, onSignOut }) {
           <h1 className="text-2xl font-bold text-gray-900">Life-OS Dashboard</h1>
           <div className="flex items-center">
             <span className="text-sm text-gray-600 mr-4 hidden sm:block">{user.email}</span>
-            <button
-              onClick={onSignOut}
-              className="px-4 py-2 font-bold text-white bg-red-600 rounded-md hover:bg-red-700"
-            >
-              Sign Out
-            </button>
+            <button onClick={onSignOut} className="px-4 py-2 font-bold text-white bg-red-600 rounded-md hover:bg-red-700">Sign Out</button>
           </div>
         </div>
       </header>
@@ -53,39 +57,40 @@ export default function Dashboard({ user, onSignOut }) {
             
             {/* Column 1: Forms */}
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-semibold mb-4">Add New Transaction</h2>
-                <AddTransaction user={user} onNewTransaction={fetchTransactions} />
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-xl font-semibold mb-4">Add New Task</h2>
-                <p className="text-gray-500">Feature coming soon...</p>
-              </div>
+              <div className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4">Add New Transaction</h2><AddTransaction user={user} onNewTransaction={fetchData} /></div>
+              <div className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-semibold mb-4">Add New Task</h2><AddTask user={user} onNewTask={fetchData} /></div>
             </div>
 
             {/* Column 2: Data Display */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-              {loading ? (
-                <p>Loading transactions...</p>
-              ) : transactions.length > 0 ? (
-                <ul className="divide-y divide-gray-200">
-                  {transactions.map((tx) => (
-                    <li key={tx.id} className="py-3 flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold">{tx.category}</p>
-                        <p className="text-sm text-gray-500">{tx.notes || new Date(tx.transaction_date).toLocaleDateString()}</p>
-                      </div>
-                      <p className={`font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.type === 'income' ? '+' : '-'} ₹{tx.amount}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No transactions yet. Add one to get started!</p>
-              )}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+                {loading ? <p>Loading...</p> : transactions.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {transactions.map((tx) => (
+                      <li key={tx.id} className="py-3 flex justify-between items-center">
+                        <div><p className="font-semibold">{tx.category}</p><p className="text-sm text-gray-500">{tx.notes || new Date(tx.transaction_date).toLocaleDateString()}</p></div>
+                        <p className={`font-bold ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{tx.type === 'income' ? '+' : '-'} ₹{tx.amount}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p>No transactions yet.</p>}
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-xl font-semibold mb-4">Your Tasks</h2>
+                {loading ? <p>Loading...</p> : tasks.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {tasks.map((task) => (
+                      <li key={task.id} className="py-3 flex items-center">
+                        <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" defaultChecked={task.is_completed} />
+                        <p className="ml-3 font-medium">{task.title}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p>No tasks yet. Add one!</p>}
+              </div>
             </div>
+
           </div>
         </div>
       </main>
