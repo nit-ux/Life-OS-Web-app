@@ -95,8 +95,6 @@ export default function Dashboard({ user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-gray-100">
-
-// ... inside the Dashboard component ...
 <header className="bg-white shadow">
   <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
     <h1 className="text-2xl font-bold text-gray-900">
