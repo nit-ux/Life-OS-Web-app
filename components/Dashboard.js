@@ -1,41 +1,47 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import AddTransaction from './AddTransaction';
-import AddTask from './AddTask'; // Import the new task component
+import AddTask from './AddTask';
 
 export default function Dashboard({ user, onSignOut }) {
   const [transactions, setTransactions] = useState([]);
-  const [tasks, setTasks] = useState([]); // State for tasks
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch all data
   const fetchData = async () => {
     setLoading(true);
-    // Fetch transactions
-    const { data: transactionsData, error: transactionsError } = await supabase
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    // Fetch tasks
-    const { data: tasksData, error: tasksError } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data: transactionsData, error: transactionsError } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+    const { data: tasksData, error: tasksError } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
 
     if (transactionsError) console.error('Error fetching transactions:', transactionsError);
-    else setTransactions(transactionsData);
+    else setTransactions(transactionsData || []);
 
     if (tasksError) console.error('Error fetching tasks:', tasksError);
-    else setTasks(tasksData);
+    else setTasks(tasksData || []);
     
     setLoading(false);
   };
 
-  // Fetch all data when the component loads
   useEffect(() => {
     fetchData();
   }, []);
+
+  // NEW FUNCTION: To update the task status
+  const toggleTaskStatus = async (task) => {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ is_completed: !task.is_completed })
+      .match({ id: task.id });
+
+    if (error) {
+      alert('Error updating task: ' + error.message);
+    } else {
+      // Update the tasks list in the UI instantly
+      setTasks(
+        tasks.map((t) => (t.id === task.id ? { ...t, is_completed: !t.is_completed } : t))
+      );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -81,9 +87,9 @@ export default function Dashboard({ user, onSignOut }) {
                 {loading ? <p>Loading...</p> : tasks.length > 0 ? (
                   <ul className="divide-y divide-gray-200">
                     {tasks.map((task) => (
-                      <li key={task.id} className="py-3 flex items-center">
-                        <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" defaultChecked={task.is_completed} />
-                        <p className="ml-3 font-medium">{task.title}</p>
+                      <li key={task.id} className="py-3 flex items-center cursor-pointer group" onClick={() => toggleTaskStatus(task)}>
+                        <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 pointer-events-none" checked={task.is_completed} readOnly />
+                        <p className={`ml-3 font-medium ${task.is_completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</p>
                       </li>
                     ))}
                   </ul>
