@@ -95,7 +95,6 @@ export default function Dashboard({ user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      import Link from 'next/link'; // Make sure to add this import at the top of the file!
 
 // ... inside the Dashboard component ...
 <header className="bg-white shadow">
