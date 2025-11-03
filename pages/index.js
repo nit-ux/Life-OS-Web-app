@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import Auth from '../components/Auth'
+import Dashboard from '../components/Dashboard' // Import the new Dashboard component
 
 export default function Home() {
   const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -18,22 +22,16 @@ export default function Home() {
     
     return () => subscription.unsubscribe()
   }, [])
+  
+  // We show a loading message while we check for a session
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>
+  }
 
   if (!session) {
     return <Auth />
   } else {
-    return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold">Welcome to Life-OS!</h1>
-        <p>You are logged in!</p>
-        <p>Email: {session.user.email}</p>
-        <button
-          className="mt-4 px-4 py-2 font-bold text-white bg-red-600 rounded-md hover:bg-red-700"
-          onClick={() => supabase.auth.signOut()}
-        >
-          Sign Out
-        </button>
-      </div>
-    )
+    // Pass user info and the signOut function to the Dashboard
+    return <Dashboard user={session.user} onSignOut={() => supabase.auth.signOut()} />
   }
 }
