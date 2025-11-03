@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import AddTransaction from './AddTransaction';
 import AddTask from './AddTask';
+import Link from 'next/link';
 
 // Helper function to format seconds into HH:MM:SS
 const formatTime = (seconds) => {
