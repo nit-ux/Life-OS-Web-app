@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import AddTransaction from './AddTransaction';
 import AddTask from './AddTask';
-import Link from 'next/link';
 
 // Helper function to format seconds into HH:MM:SS
 const formatTime = (seconds) => {
@@ -95,23 +94,6 @@ export default function Dashboard({ user, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-gray-100">
-<header className="bg-white shadow">
-  <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-    <h1 className="text-2xl font-bold text-gray-900">
-      Life-OS Dashboard
-    </h1>
-    <div className="flex items-center space-x-4">
-      <Link href="/analytics" legacyBehavior>
-        <a className="px-4 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 hidden sm:block">
-          View Analytics
-        </a>
-      </Link>
-      <button onClick={onSignOut} className="px-4 py-2 font-bold text-white bg-red-600 rounded-md hover:bg-red-700">
-        Sign Out
-      </button>
-    </div>
-  </div>
-</header>
 
       <main>
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
