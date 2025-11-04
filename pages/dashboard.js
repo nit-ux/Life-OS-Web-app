@@ -1,37 +1,44 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import Auth from '../components/Auth'
-import Dashboard from '../components/Dashboard' // Import the new Dashboard component
+import Dashboard from '../components/Dashboard'
 
-export default function Home() {
+export default function DashboardPage() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    setLoading(true)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
+      if (!session) {
+        router.replace('/') // Redirect to login if not logged in
+      } else {
+        setSession(session)
+        setLoading(false)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession(session)
+        if (!session) {
+          router.replace('/')
+        }
       }
     )
     
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
   
-  // We show a loading message while we check for a session
   if (loading) {
-    return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>
+    return <div className="flex justify-center items-center h-screen"><p>Loading Dashboard...</p></div>
   }
 
-  if (!session) {
-    return <Auth />
-  } else {
-    // Pass user info and the signOut function to the Dashboard
-    return <Dashboard user={session.user} onSignOut={() => supabase.auth.signOut()} />
+  if (session) {
+    return <Dashboard user={session.user} onSignOut={() => {
+      supabase.auth.signOut();
+      router.push('/');
+    }} />
   }
+
+  return null;
 }
